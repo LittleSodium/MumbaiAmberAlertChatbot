@@ -2,7 +2,7 @@ import os
 import sys
 import json
 import requests
-from flask import Flask, request
+from flask import Flask, request, url_for
 
 app = Flask(__name__)
 
@@ -13,6 +13,9 @@ app = Flask(__name__)
 #     "payload":"GET_STARTED_PAYLOAD"
 #   }
 # }' "https://graph.facebook.com/v2.6/me/messenger_profile?access_token=PAGE_ACCESS_TOKEN"
+
+# <div>Icons made by <a href="http://www.flaticon.com/authors/madebyoliver" title="Madebyoliver">Madebyoliver</a> from <a href="http://www.flaticon.com" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
+# <div>Icons made by <a href="http://www.flaticon.com/authors/maxim-basinski" title="Maxim Basinski">Maxim Basinski</a> from <a href="http://www.flaticon.com" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
 
 @app.route('/webhook', methods=['GET'])
 def verify():
@@ -25,6 +28,19 @@ def verify():
 
     return "Hello world", 200
 
+    # Register the Get Started Button
+    params = {
+        "access_token": os.environ["PAGE_ACCESS_TOKEN"]
+    }
+    headers = {
+        "Content-Type": "application/json"
+    }
+    data = json.dumps({
+            "get_started": {
+            "payload":"GET_STARTED_PAYLOAD"
+            }
+        })
+    r = requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
@@ -45,7 +61,16 @@ def webhook():
                     recipient_id = messaging_event["recipient"]["id"]  # the recipient's ID, which should be your page's facebook ID
                     message_text = messaging_event["message"]["text"]  # the message's text
 
-                    send_message_quick_reply(sender_id, "I am sorry, I don't understand that. Did you want to report a missing/found person?")
+                    if messaging_event["message"].get("quick_reply"):
+                        if messaging_event["message"]["quick_reply"]["payload"] == 'found':
+                            send_message(sender_id, "That is great! Please contact the nearest police station.")
+
+                        else:
+                            if messaging_event["message"]["quick_reply"]["payload"] == 'missing':
+                                response_text = "Please tell us more about the person."
+                                send_message(sender_id, response_text)
+                    else:
+                        send_message_quick_reply(sender_id, "I am sorry, I don't understand that. Did you want to report a missing/found person?")
 
                 if messaging_event.get("delivery"):  # delivery confirmation
                     pass
@@ -58,14 +83,6 @@ def webhook():
 
                     if messaging_event["postback"]["payload"] == "GET_STARTED_PAYLOAD":
                         send_message_quick_reply(sender_id, "Welcome to Mumbai Amber Alert. Would you like to report a missing person or report that you may have found a missing person?")
-
-
-                    if messaging_event["postback"]["payload"] == 'found':
-                        send_message("That is great! Please contact the nearest police station")
-
-                    if messaging_event["postback"]["payload"] == 'missing':
-                        response_text = "Please tell us more about the person."
-                        send_message(sender_id, response_text)
 
     return "ok", 200
 
@@ -93,7 +110,7 @@ def send_message(recipient_id, message_text):
         log(r.status_code)
         log(r.text)
 
-def send_message(recipient_id, message_text):
+def send_message_quick_reply(recipient_id, message_text):
 
     log("sending message to {recipient}: {text}".format(recipient=recipient_id, text=message_text))
 
@@ -114,13 +131,13 @@ def send_message(recipient_id, message_text):
                     "content_type":"text",
                     "title":"Report Missing",
                     "payload":"missing",
-                    "image_url":"http://petersfantastichats.com/img/red.png"
+                    "image_url": "https://0648b3d4.ngrok.io/static/error.svg"
                   },
                   {
                     "content_type":"text",
                     "title":"I found a person!",
                     "payload":"found",
-                    "image_url":"http://petersfantastichats.com/img/green.png"
+                    "image_url": "https://0648b3d4.ngrok.io/static/success.svg"
                   }
                 ]
         }
