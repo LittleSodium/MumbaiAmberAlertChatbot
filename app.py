@@ -59,7 +59,8 @@ def webhook():
 
                     sender_id = messaging_event["sender"]["id"]        # the facebook ID of the person sending the message
                     recipient_id = messaging_event["recipient"]["id"]  # the recipient's ID, i.e our page's facebook ID
-                    message_text = messaging_event["message"]["text"]  # the message's text
+                    if messaging_event["message"].get("text"):
+                        message_text = messaging_event["message"]["text"]  # the message's text
 
                     if messaging_event["message"].get("quick_reply"):
                         if messaging_event["message"]["quick_reply"]["payload"] == 'found':
@@ -77,6 +78,7 @@ def webhook():
                     sender_id = messaging_event["sender"]["id"]
 
                     if messaging_event["postback"]["payload"] == "GET_STARTED_PAYLOAD":
+                        send_subscriber_id(sender_id)
                         send_message_quick_reply(sender_id, "Welcome to Mumbai Amber Alert. Would you like to report a missing person or report that you may have found a missing person?")
 
     return "ok", 200
@@ -142,7 +144,7 @@ def send_message_quick_reply(recipient_id, message_text):
         log(r.text)
 
 def send_message_webview(recipient_id, message_text):
-
+    # Send URL Button that opens webview containing form for registering missing person.
     log("sending message to {recipient}: {text}".format(recipient=recipient_id, text=message_text))
 
     params = {
@@ -164,8 +166,10 @@ def send_message_webview(recipient_id, message_text):
                 "buttons":[
                   {
                     "type":"web_url",
-                    "url":"https://mumbaiamberalertinfo.herokuapp.com/people/new",
-                    "title":"Enter Details"
+                    "url":"https://d5cd3cf4.ngrok.io/people/new?user=" + recipient_id,
+                    "title":"Enter Details",
+                    "webview_height_ratio": "full",
+                    "messenger_extensions": "true"
                   }
                 ]
               }
@@ -177,7 +181,17 @@ def send_message_webview(recipient_id, message_text):
         log(r.status_code)
         log(r.text)
 
-# Webview containing form for entering details of missing person.
+def send_subscriber_id(sender_id):
+    headers = {
+        "Content-Type": "application/json"
+    }
+    data = json.dumps({
+        "subscriber_id": sender_id,
+        "key": os.environ["SUBSCRIBER_REG_KEY"]
+    })
+    r = requests.post("https://d5cd3cf4.ngrok.io/subscribe", headers=headers, data=data)
+    if r.status_code != 200:
+        log(r.status_code)
 
 def log(message):  # simple wrapper for logging to stdout on heroku
     print(str(message))
