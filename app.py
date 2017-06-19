@@ -166,7 +166,7 @@ def send_message_webview(recipient_id, message_text):
                 "buttons":[
                   {
                     "type":"web_url",
-                    "url":"https://d5cd3cf4.ngrok.io/people/new?user=" + recipient_id,
+                    "url":"https://mumbaiamberalertinfo.herokuapp.com/people/new?user=" + recipient_id,
                     "title":"Enter Details",
                     "webview_height_ratio": "full",
                     "messenger_extensions": "true"
@@ -209,7 +209,7 @@ def send_message_call_button(recipient_id, message_text):
                   },
                   {
                     "type":"web_url",
-                    "url":"https://d5cd3cf4.ngrok.io",
+                    "url":"https://mumbaiamberalertinfo.herokuapp.com",
                     "title":"Show Person Database",
                     "webview_height_ratio": "full"
                   }
@@ -231,7 +231,7 @@ def send_subscriber_id(sender_id):
         "subscriber_id": sender_id,
         "key": os.environ["SUBSCRIBER_REG_KEY"]
     })
-    r = requests.post("https://d5cd3cf4.ngrok.io/subscribe", headers=headers, data=data)
+    r = requests.post("https://mumbaiamberalertinfo.herokuapp.com/subscribe", headers=headers, data=data)
     if r.status_code != 200:
         log(r.status_code)
 
