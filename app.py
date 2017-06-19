@@ -64,7 +64,7 @@ def webhook():
 
                     if messaging_event["message"].get("quick_reply"):
                         if messaging_event["message"]["quick_reply"]["payload"] == 'found':
-                            send_message(sender_id, "That is great! Please contact the nearest police station, or call the Missing Person helpline at 22621549.")
+                            send_message_call_button(sender_id, "That is great! Please contact the nearest police station, or call the Missing Person helpline at 02222621549.")
 
                         else:
                             if messaging_event["message"]["quick_reply"]["payload"] == 'missing':
@@ -170,6 +170,42 @@ def send_message_webview(recipient_id, message_text):
                     "title":"Enter Details",
                     "webview_height_ratio": "full",
                     "messenger_extensions": "true"
+                  }
+                ]
+              }
+            }
+          }
+        })
+    r = requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
+    if r.status_code != 200:
+        log(r.status_code)
+        log(r.text)
+
+def send_message_call_button(recipient_id, message_text):
+    # Send URL Button that opens webview containing form for registering missing person.
+    log("sending message to {recipient}: {text}".format(recipient=recipient_id, text=message_text))
+
+    params = {
+        "access_token": os.environ["PAGE_ACCESS_TOKEN"]
+    }
+    headers = {
+        "Content-Type": "application/json"
+    }
+    data = json.dumps({
+        "recipient": {
+            "id": recipient_id
+        },
+        "message":{
+            "attachment":{
+              "type":"template",
+              "payload":{
+                "template_type":"button",
+                "text": message_text,
+                "buttons":[
+                  {
+                    "type":"phone_number",
+                    "title":"Call Police Helpline",
+                    "payload": "02222621549"
                   }
                 ]
               }
